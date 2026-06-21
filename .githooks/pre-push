@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Sync local .env to GitHub secrets before pushing to main (triggers deploy workflow).
+set -euo pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+while read -r _local_ref _local_sha remote_ref _remote_sha; do
+  if [[ "$remote_ref" == "refs/heads/main" ]]; then
+    "$ROOT/scripts/sync-secrets.sh"
+    break
+  fi
+done
+
+exit 0

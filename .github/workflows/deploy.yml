@@ -1,0 +1,96 @@
+# Auto-deploy Rechat to the production GCE VM on every push to main.
+#
+# Required GitHub repository secrets (Settings → Secrets and variables → Actions):
+#   GCP_PROJECT_ID      — GCP project id
+#   GCP_SA_KEY          — JSON key for a service account that can SSH to the VM
+#   PRODUCTION_DOTENV   — production .env without WEBUI_SECRET_KEY (synced on push)
+#   WEBUI_SECRET_KEY    — stable session secret (set once; optional but recommended)
+#
+# One-time setup from your laptop:
+#   ./scripts/deploy.sh all
+#   ./scripts/setup-github-secrets.sh   # GCP + .env secrets via gh CLI
+#   ./scripts/install-git-hooks.sh      # auto-sync .env on push to main
+#   ./scripts/deploy.sh setup-deploy-key && ./scripts/deploy.sh git-init
+#
+# Skip a deploy: put [skip deploy] in the commit message.
+
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    if: "!contains(github.event.head_commit.message, '[skip deploy]')"
+    runs-on: ubuntu-latest
+    env:
+      INSTANCE: rechat-prod
+      ZONE: europe-west1-b
+      REMOTE_DIR: rechat
+      DEPLOY_USER: naoufel
+      APP_DOMAIN: rechat.naoufel.io
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Sync production .env to VM
+        env:
+          PRODUCTION_DOTENV: ${{ secrets.PRODUCTION_DOTENV }}
+          WEBUI_SECRET_KEY: ${{ secrets.WEBUI_SECRET_KEY }}
+        run: |
+          if [[ -z "$PRODUCTION_DOTENV" ]]; then
+            echo "PRODUCTION_DOTENV secret is not set — skipping .env sync (VM must already have .env)."
+            exit 0
+          fi
+          gcloud compute ssh "${DEPLOY_USER}@${INSTANCE}" --zone="$ZONE" --quiet \
+            --command="mkdir -p ~/${REMOTE_DIR}"
+          gcloud compute ssh "${DEPLOY_USER}@${INSTANCE}" --zone="$ZONE" --quiet \
+            --command="cat ~/${REMOTE_DIR}/.env 2>/dev/null || true" > /tmp/rechat.vm.env || true
+          printf '%s' "$PRODUCTION_DOTENV" > /tmp/rechat.prod.env
+          python3 scripts/merge-env.py /tmp/rechat.vm.env /tmp/rechat.prod.env \
+            > /tmp/rechat.merged.env
+          if [[ -n "$(tail -c1 /tmp/rechat.merged.env 2>/dev/null || true)" ]]; then
+            printf '\n' >> /tmp/rechat.merged.env
+          fi
+          if [[ -n "${WEBUI_SECRET_KEY:-}" ]] && ! grep -q '^WEBUI_SECRET_KEY=.' /tmp/rechat.merged.env; then
+            printf 'WEBUI_SECRET_KEY=%s\n' "$WEBUI_SECRET_KEY" >> /tmp/rechat.merged.env
+          fi
+          gcloud compute scp --zone="$ZONE" --quiet \
+            /tmp/rechat.merged.env "${DEPLOY_USER}@${INSTANCE}:${REMOTE_DIR}/.env"
+          rm -f /tmp/rechat.vm.env /tmp/rechat.prod.env /tmp/rechat.merged.env
+          gcloud compute ssh "${DEPLOY_USER}@${INSTANCE}" --zone="$ZONE" --quiet \
+            --command="chmod 600 ~/${REMOTE_DIR}/.env"
+
+      - name: Pull and rebuild on VM
+        run: |
+          gcloud compute ssh "${DEPLOY_USER}@${INSTANCE}" \
+            --zone="$ZONE" \
+            --quiet \
+            --command="cd ~/${REMOTE_DIR} && chmod +x scripts/vm-deploy.sh && ./scripts/vm-deploy.sh"
+
+      - name: Smoke test
+        run: |
+          for i in 1 2 3 4 5 6 8 10 12; do
+            if curl -fsS -o /dev/null -w "GET /health → %{http_code}\n" "https://${APP_DOMAIN}/health"; then
+              exit 0
+            fi
+            echo "Attempt failed, retrying in ${i}s..."
+            sleep "$i"
+          done
+          exit 1

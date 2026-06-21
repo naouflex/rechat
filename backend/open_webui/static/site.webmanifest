@@ -1,6 +1,6 @@
 {
-  "name": "Open WebUI",
-  "short_name": "WebUI",
+  "name": "Rechat",
+  "short_name": "Rechat",
   "icons": [
     {
       "src": "/static/web-app-manifest-192x192.png",

@@ -613,23 +613,21 @@ class SPAStaticFiles(StaticFiles):
 
 if LOG_FORMAT != 'json':
     banner = rf"""
- ██████╗ ██████╗ ███████╗███╗   ██╗    ██╗    ██╗███████╗██████╗ ██╗   ██╗██╗
-██╔═══██╗██╔══██╗██╔════╝████╗  ██║    ██║    ██║██╔════╝██╔══██╗██║   ██║██║
-██║   ██║██████╔╝█████╗  ██╔██╗ ██║    ██║ █╗ ██║█████╗  ██████╔╝██║   ██║██║
-██║   ██║██╔═══╝ ██╔══╝  ██║╚██╗██║    ██║███╗██║██╔══╝  ██╔══██╗██║   ██║██║
-╚██████╔╝██║     ███████╗██║ ╚████║    ╚███╔███╔╝███████╗██████╔╝╚██████╔╝██║
- ╚═════╝ ╚═╝     ╚══════╝╚═╝  ╚═══╝     ╚══╝╚══╝ ╚══════╝╚═════╝  ╚═════╝ ╚═╝
+██████╗ ███████╗ ██████╗██╗  ██╗ █████╗ ████████╗
+██╔══██╗██╔════╝██╔════╝██║  ██║██╔══██╗╚══██╔══╝
+██████╔╝█████╗  ██║     ███████║███████║   ██║
+██╔══██╗██╔══╝  ██║     ██╔══██║██╔══██║   ██║
+██║  ██║███████╗╚██████╗██║  ██║██║  ██║   ██║
+╚═╝  ╚═╝╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝
 
-
-v{VERSION} - building the best AI user interface.
+v{VERSION}
 {f'Commit: {WEBUI_BUILD_HASH}' if WEBUI_BUILD_HASH != 'dev-build' else ''}
-https://github.com/open-webui/open-webui
 """
     try:
         print(banner)
     except UnicodeEncodeError:
         # Stdout can't encode the box-drawing banner (Windows cp1252, redirected/headless stdout); fall back to ASCII.
-        print(f'Open WebUI v{VERSION} - building the best AI user interface.\nhttps://github.com/open-webui/open-webui')
+        print(f'Rechat v{VERSION}\nhttps://github.com/open-webui/open-webui')
 
 
 @asynccontextmanager
@@ -747,7 +745,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title='Open WebUI',
+    title='Rechat',
     docs_url='/docs' if ENV == 'dev' else None,
     openapi_url='/openapi.json' if ENV == 'dev' else None,
     redoc_url=None,
@@ -2243,7 +2241,7 @@ async def generate_messages(
     pipeline, then converts the response back to Anthropic Messages format.
 
     Supports both streaming and non-streaming requests.
-    All models configured in Open WebUI are accessible via this endpoint.
+    All models configured in Rechat are accessible via this endpoint.
 
     Authentication: Supports both standard Authorization header and
     Anthropic's x-api-key header (via middleware translation).
@@ -2595,7 +2593,7 @@ async def get_app_changelog():
 @app.get('/api/usage')
 async def get_current_usage(user=Depends(get_verified_user)):
     """
-    Get current usage statistics for Open WebUI.
+    Get current usage statistics for Rechat.
     This is an experimental endpoint and subject to change.
     """
     try:
