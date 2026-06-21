@@ -1096,6 +1096,7 @@
 					const publicPath =
 						$page.url.pathname === '/auth' ||
 						$page.url.pathname === '/' ||
+						$page.url.pathname.startsWith('/docs') ||
 						$page.url.pathname.startsWith('/s/') ||
 						$page.url.pathname === '/error';
 					if (!publicPath) {

@@ -1,4 +1,4 @@
-/* Marketing pages — warm sunset palette matched to the Rechat logo. */
+/* Marketing pages: warm sunset palette matched to the Rechat logo. */
 .landing {
 	--surface: #0a0a0a;
 	--panel: #121212;
@@ -150,4 +150,14 @@
 	.landing-fade-up {
 		animation: none;
 	}
+}
+
+/* Open WebUI locks html scroll for the chat shell (app.html). Re-enable for marketing. */
+html:has(.landing-scroll) {
+	overflow-y: auto !important;
+	overscroll-behavior-y: auto;
+}
+
+html:has(.landing-scroll) body {
+	overflow-y: auto !important;
 }

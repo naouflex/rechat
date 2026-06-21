@@ -39,7 +39,7 @@
 		{
 			step: '3',
 			title: 'Chat with your team',
-			text: 'Start conversations, share threads, manage models from the workspace, and invite teammates with role-based access — all from one interface.'
+			text: 'Start conversations, share threads, manage models from the workspace, and invite teammates with role-based access, all from one interface.'
 		}
 	] as const;
 
@@ -58,7 +58,7 @@
 		},
 		{
 			title: 'Full workspace',
-			text: 'Manage prompts, models, skills, and automations from a dedicated workspace — not just a chat box.'
+			text: 'Manage prompts, models, skills, and automations from a dedicated workspace, not just a chat box.'
 		},
 		{
 			title: 'Channels & sharing',
@@ -66,7 +66,7 @@
 		},
 		{
 			title: 'Voice & vision',
-			text: 'Speech-to-text, text-to-speech, and image understanding when your models support it — all in the same UI.'
+			text: 'Speech-to-text, text-to-speech, and image understanding when your models support it, all in the same UI.'
 		},
 		{
 			title: 'Self-hosted & private',
@@ -102,7 +102,7 @@
 		},
 		{
 			title: 'Research & analysis',
-			text: 'Summarize long documents, compare model outputs, and export structured findings — without sending sensitive data to a SaaS.'
+			text: 'Summarize long documents, compare model outputs, and export structured findings without sending sensitive data to a SaaS.'
 		},
 		{
 			title: 'Customer support assist',
@@ -120,7 +120,7 @@
 	const FAQ = [
 		{
 			q: 'What is Rechat?',
-			a: 'Rechat is a self-hosted AI chat platform built on Open WebUI. It gives you a modern chat interface with support for multiple models, knowledge bases, tools, and team features — all running on your own server.'
+			a: 'Rechat is a self-hosted AI chat platform built on Open WebUI. It gives you a modern chat interface with support for multiple models, knowledge bases, tools, and team features, all running on your own server.'
 		},
 		{
 			q: 'Do I need a cloud API key?',
@@ -132,7 +132,7 @@
 		},
 		{
 			q: 'How is my data stored?',
-			a: 'Chat history and user data live in your PostgreSQL or SQLite database. Uploaded files stay on your server volume. Nothing is sent to Rechat — you own the stack.'
+			a: 'Chat history and user data live in your PostgreSQL or SQLite database. Uploaded files stay on your server volume. Nothing is sent to Rechat. You own the stack.'
 		},
 		{
 			q: 'Does it work offline?',
@@ -148,7 +148,7 @@
 		{ role: 'user', text: 'Summarize our Q3 roadmap doc and flag any risks.' },
 		{
 			role: 'assistant',
-			text: 'Based on your knowledge base: three milestones ship in Q3. The main risk is the API migration timeline — I recommend a buffer week before the beta cut.'
+			text: 'Based on your knowledge base: three milestones ship in Q3. The main risk is the API migration timeline. I recommend a buffer week before the beta cut.'
 		},
 		{ role: 'user', text: 'Draft a Slack update for the eng team.' }
 	] as const;
@@ -162,7 +162,7 @@
 </script>
 
 <svelte:head>
-	<title>{BRAND} — {TAGLINE_PRIMARY}</title>
+	<title>{BRAND} | {TAGLINE_PRIMARY}</title>
 	<meta name="description" content={TAGLINE_SUPPORTING} />
 	<meta name="theme-color" content="#0a0a0a" />
 </svelte:head>
@@ -379,7 +379,7 @@
 						Everything a modern AI workspace needs
 					</h2>
 					<p class="mt-3 text-[#a89890]">
-						Models, RAG, tools, workspace management, and team features — without sending data to a
+						Models, RAG, tools, workspace management, and team features without sending data to a
 						black box.
 					</p>
 				</div>
@@ -455,7 +455,7 @@
 						Built for real work, not just demos
 					</h2>
 					<p class="mt-3 text-[#a89890]">
-						Teams use Rechat for engineering, research, support, and internal knowledge — all on
+						Teams use Rechat for engineering, research, support, and internal knowledge, all on
 						their own terms.
 					</p>
 				</div>
@@ -496,7 +496,7 @@
 			<div class="relative mx-auto max-w-3xl px-5 py-24 text-center sm:px-6 sm:py-32">
 				<h2 class="text-3xl font-bold tracking-tight sm:text-4xl">Ready to chat on your terms?</h2>
 				<p class="mx-auto mt-4 max-w-xl text-[#a89890]">
-					Sign in to this instance and start a conversation — or deploy your own copy and own the
+					Sign in to this instance and start a conversation, or deploy your own copy and own the
 					full stack.
 				</p>
 				<div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">

@@ -26,10 +26,11 @@
 		{
 			title: 'Resources',
 			links: [
+				{ type: 'href' as const, href: '/docs', label: 'Documentation' },
 				{
 					type: 'href' as const,
 					href: 'https://github.com/open-webui/open-webui',
-					label: 'Open WebUI',
+					label: 'Upstream (Open WebUI)',
 					external: true
 				},
 				{ type: 'href' as const, href: 'https://ollama.com', label: 'Ollama', external: true }
@@ -54,7 +55,7 @@
 					<span class="text-base font-semibold text-[var(--text)]">{BRAND}</span>
 				</a>
 				<p class="mt-4 text-sm leading-relaxed text-[#8a8078]">
-					Self-hosted AI chat with models, knowledge, tools, and a full workspace — on your
+					Self-hosted AI chat with models, knowledge, tools, and a full workspace on your
 					infrastructure.
 				</p>
 			</div>
