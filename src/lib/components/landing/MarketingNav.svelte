@@ -27,9 +27,6 @@
 		</a>
 
 		<div class="hidden items-center gap-6 lg:flex">
-			<a href="/docs" class="text-sm text-[#a89890] transition hover:text-[var(--accent)]">
-				Docs
-			</a>
 			{#each NAV_LINKS as { id, label }}
 				<a
 					href="#{id}"
@@ -39,6 +36,9 @@
 					{label}
 				</a>
 			{/each}
+			<a href="/docs" class="text-sm text-[#a89890] transition hover:text-[var(--accent)]">
+				Docs
+			</a>
 		</div>
 
 		<div class="flex items-center gap-2 sm:gap-3">
@@ -65,7 +65,6 @@
 	{#if open}
 		<div class="border-t border-[var(--edge)] bg-[var(--panel)] px-5 py-4 lg:hidden">
 			<div class="flex flex-col gap-3">
-				<a href="/docs" class="text-sm text-[#d4ccc4]" on:click={closeMenu}>Docs</a>
 				{#each NAV_LINKS as { id, label }}
 					<a
 						href="#{id}"
@@ -75,6 +74,7 @@
 						{label}
 					</a>
 				{/each}
+				<a href="/docs" class="text-sm text-[#d4ccc4]" on:click={closeMenu}>Docs</a>
 				<a href={signedIn ? '/' : '/auth'} class="landing-btn-primary w-full justify-center">
 					{signedIn ? 'Open app' : 'Sign in'}
 				</a>
