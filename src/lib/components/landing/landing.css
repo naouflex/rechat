@@ -1,0 +1,153 @@
+/* Marketing pages — warm sunset palette matched to the Rechat logo. */
+.landing {
+	--surface: #0a0a0a;
+	--panel: #121212;
+	--panel-2: #1a1412;
+	--edge: #2a2220;
+	--accent: #e8956a;
+	--accent-mid: #d46b52;
+	--accent-muted: #b8434a;
+	--accent-deep: #9a3d5c;
+	--text: #f0ebe6;
+	--landing-grid-line: rgba(232, 149, 106, 0.04);
+	color-scheme: dark;
+	background-color: var(--surface);
+	color: var(--text);
+	scroll-behavior: smooth;
+}
+
+.landing section[id] {
+	scroll-margin-top: 5rem;
+}
+
+.landing-hero::after {
+	content: '';
+	pointer-events: none;
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	height: 8rem;
+	background: linear-gradient(to bottom, transparent, var(--surface));
+}
+
+.landing-grid {
+	background-image:
+		linear-gradient(to right, var(--landing-grid-line) 1px, transparent 1px),
+		linear-gradient(to bottom, var(--landing-grid-line) 1px, transparent 1px);
+	background-size: 64px 64px;
+	mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 20%, transparent 75%);
+}
+
+.landing-glow {
+	background: radial-gradient(
+		ellipse 80% 60% at 50% -10%,
+		color-mix(in srgb, var(--accent) 28%, transparent),
+		color-mix(in srgb, var(--accent-muted) 8%, transparent) 45%,
+		transparent 70%
+	);
+}
+
+.landing-gradient-text {
+	background: linear-gradient(
+		135deg,
+		#f0b078 0%,
+		var(--accent) 35%,
+		var(--accent-mid) 65%,
+		var(--accent-muted) 100%
+	);
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+}
+
+.landing-mockup-glow {
+	background: linear-gradient(
+		135deg,
+		color-mix(in srgb, var(--accent) 22%, transparent),
+		color-mix(in srgb, var(--accent-muted) 14%, transparent)
+	);
+	opacity: 0.75;
+}
+
+.landing-cta-glow {
+	background: radial-gradient(
+		ellipse 80% 80% at 50% 100%,
+		color-mix(in srgb, var(--accent-mid) 16%, transparent),
+		transparent 65%
+	);
+}
+
+.landing-btn-primary {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	border-radius: 9999px;
+	border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+	background: linear-gradient(135deg, var(--accent) 0%, var(--accent-mid) 55%, var(--accent-muted) 100%);
+	padding: 0.625rem 1.5rem;
+	font-size: 0.875rem;
+	font-weight: 600;
+	color: #0a0a0a;
+	transition: opacity 0.15s, transform 0.15s, box-shadow 0.15s;
+	box-shadow: 0 4px 24px color-mix(in srgb, var(--accent-mid) 25%, transparent);
+}
+
+.landing-btn-primary:hover {
+	opacity: 0.95;
+	transform: translateY(-1px);
+	box-shadow: 0 6px 28px color-mix(in srgb, var(--accent-mid) 35%, transparent);
+}
+
+.landing-btn-ghost {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	border-radius: 9999px;
+	border: 1px solid var(--edge);
+	background: transparent;
+	padding: 0.625rem 1.5rem;
+	font-size: 0.875rem;
+	font-weight: 500;
+	color: #a89890;
+	transition: color 0.15s, border-color 0.15s;
+}
+
+.landing-btn-ghost:hover {
+	color: #f0ebe6;
+	border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.landing-stat-value {
+	background: linear-gradient(135deg, var(--accent) 0%, var(--accent-mid) 100%);
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+}
+
+@keyframes landing-fade-up {
+	from {
+		opacity: 0;
+		transform: translateY(12px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.landing-fade-up {
+	animation: landing-fade-up 0.6s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.landing {
+		scroll-behavior: auto;
+	}
+
+	.landing-fade-up {
+		animation: none;
+	}
+}

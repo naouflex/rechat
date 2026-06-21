@@ -194,6 +194,10 @@
 
 	onMount(async () => {
 		if ($user === undefined || $user === null) {
+			if ($page.url.pathname === '/') {
+				loaded = true;
+				return;
+			}
 			await goto('/auth');
 			return;
 		}
@@ -391,7 +395,9 @@
 	</div>
 {/if}
 
-{#if $user}
+{#if !$user && $page.url.pathname === '/'}
+	<slot />
+{:else if $user}
 	<div class="app relative">
 		<div
 			class=" text-gray-700 dark:text-gray-100 bg-white dark:bg-gray-900 h-screen max-h-[100dvh] overflow-auto flex flex-row justify-end"

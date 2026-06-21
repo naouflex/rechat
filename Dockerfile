@@ -19,6 +19,7 @@ ARG USE_AUXILIARY_EMBEDDING_MODEL=TaylorAI/bge-micro-v2
 ARG USE_TIKTOKEN_ENCODING_NAME="cl100k_base"
 
 ARG BUILD_HASH=dev-build
+ARG SKIP_FRONTEND_BUILD=false
 # Override at your own risk - non-root configurations are untested
 ARG UID=0
 ARG GID=0
@@ -26,9 +27,10 @@ ARG GID=0
 ######## WebUI frontend ########
 FROM --platform=$BUILDPLATFORM node:22-alpine3.20 AS build
 ARG BUILD_HASH
+ARG SKIP_FRONTEND_BUILD
 
-# Set Node.js options (heap limit Allocation failed - JavaScript heap out of memory)
-# ENV NODE_OPTIONS="--max-old-space-size=4096"
+# Vite/SvelteKit build is memory-heavy; 4GB heap when building inside Docker.
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 WORKDIR /app
 
@@ -36,11 +38,15 @@ WORKDIR /app
 RUN apk add --no-cache git
 
 COPY package.json package-lock.json ./
-RUN npm ci --force
+RUN if [ "$SKIP_FRONTEND_BUILD" != "true" ]; then npm ci --force; fi
 
 COPY . .
 ENV APP_BUILD_HASH=${BUILD_HASH}
-RUN npm run build
+RUN if [ "$SKIP_FRONTEND_BUILD" = "true" ]; then \
+      test -f build/index.html || (echo "ERROR: build/index.html missing — run npm run build on the host or in CI first" && exit 1); \
+    else \
+      npm run build; \
+    fi
 
 ######## WebUI backend ########
 FROM python:3.11-slim-bookworm AS base

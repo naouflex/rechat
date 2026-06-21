@@ -53,4 +53,31 @@ Internet → Caddy (:443) → rechat:8080
                           ↘ ollama:11434
 ```
 
-Data: Docker volumes `rechat-data` + `ollama`.
+Data: Docker volumes `rechat-data` (uploads/cache) + `ollama`.  
+PostgreSQL: Cloud SQL `watch-db` — set `DATABASE_URL` in `.env`, then:
+
+```bash
+./scripts/deploy.sh authorize-db   # whitelist VM IP on Cloud SQL
+./scripts/deploy.sh update         # restart with new .env
+```
+
+Example:
+
+```env
+DATABASE_URL=postgresql+psycopg2://postgres:PASSWORD@104.155.73.241:5432/rechat?sslmode=require
+```
+
+Create the database once (if missing): `gcloud sql databases create rechat --instance=watch-db`
+
+## 6. Frontend build (OOM fix)
+
+The SvelteKit build needs ~4 GB RAM. The **8 GB VM OOMs** if `npm run build` runs inside Docker there.
+
+Production builds the frontend **on your laptop or in GitHub Actions**, then Docker on the VM only packages the pre-built `build/` folder (`SKIP_FRONTEND_BUILD=true`).
+
+```bash
+./scripts/build-frontend.sh      # or: npm ci && npm run build
+./scripts/deploy.sh update       # uploads build/ + rebuilds backend image on VM
+```
+
+First `./scripts/deploy.sh all` runs `build-frontend.sh` automatically before upload.

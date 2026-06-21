@@ -39,6 +39,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Build frontend
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+          APP_BUILD_HASH: ${{ github.sha }}
+        run: npm ci && npm run build
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
@@ -77,12 +89,22 @@ jobs:
           gcloud compute ssh "${DEPLOY_USER}@${INSTANCE}" --zone="$ZONE" --quiet \
             --command="chmod 600 ~/${REMOTE_DIR}/.env"
 
+      - name: Upload frontend build to VM
+        run: |
+          tar -C . -czf /tmp/rechat-build.tgz build/
+          gcloud compute scp --zone="$ZONE" --quiet \
+            /tmp/rechat-build.tgz "${DEPLOY_USER}@${INSTANCE}:${REMOTE_DIR}/build.tgz"
+          gcloud compute ssh "${DEPLOY_USER}@${INSTANCE}" --zone="$ZONE" --quiet \
+            --command="cd ~/${REMOTE_DIR} && rm -rf build && mkdir -p build && tar -xzf build.tgz && rm build.tgz"
+          rm -f /tmp/rechat-build.tgz
+
       - name: Pull and rebuild on VM
         run: |
+          HASH="${GITHUB_SHA::7}"
           gcloud compute ssh "${DEPLOY_USER}@${INSTANCE}" \
             --zone="$ZONE" \
             --quiet \
-            --command="cd ~/${REMOTE_DIR} && chmod +x scripts/vm-deploy.sh && ./scripts/vm-deploy.sh"
+            --command="cd ~/${REMOTE_DIR} && export WEBUI_BUILD_HASH='${HASH}' && chmod +x scripts/vm-deploy.sh && ./scripts/vm-deploy.sh"
 
       - name: Smoke test
         run: |

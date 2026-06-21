@@ -1,6 +1,6 @@
 # Production stack for a single GCE VM (see scripts/deploy.sh).
-# Ollama + Rechat (Open WebUI fork). App data lives in the rechat-data volume
-# (SQLite by default). HTTPS is layered on via compose.https.yaml (Caddy +
+# Ollama + Rechat (Open WebUI fork). App metadata/uploads stay in rechat-data;
+# user/chat data uses DATABASE_URL (Cloud SQL PostgreSQL when set, else SQLite in the volume).
 # Let's Encrypt) once DNS points at the VM (scripts/deploy.sh https).
 name: rechat
 
@@ -15,6 +15,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        # Frontend is built on the laptop / in GitHub Actions — not on the 8GB VM.
+        SKIP_FRONTEND_BUILD: "true"
+        BUILD_HASH: ${WEBUI_BUILD_HASH:-prod}
     env_file: .env
     environment:
       OLLAMA_BASE_URL: http://ollama:11434

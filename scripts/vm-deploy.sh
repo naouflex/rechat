@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # scripts/vm-deploy.sh — runs ON the GCE VM (after `deploy.sh git-init`).
-# Pulls the latest code, rebuilds images, and restarts the stack.
-# Used by GitHub Actions on every push to main.
+# Pulls latest code, rebuilds Docker images, restarts the stack.
+#
+# The frontend must already exist in ./build/ (built in GitHub Actions or uploaded
+# via deploy.sh). The VM does not run npm run build — it OOMs on e2-standard-2.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -39,10 +41,16 @@ else
   git reset --hard "$GIT_REMOTE/$GIT_BRANCH"
 fi
 
+if [[ ! -f build/index.html ]]; then
+  die "build/index.html missing after git pull — frontend is not in git. GitHub Actions must upload build/ before this step, or run ./scripts/deploy.sh update from your laptop."
+fi
+
+export WEBUI_BUILD_HASH="${WEBUI_BUILD_HASH:-$(git rev-parse --short HEAD 2>/dev/null || echo prod)}"
+
 compose_args=(-f "$COMPOSE_FILE")
 [[ -f compose.https.yaml ]] && compose_args+=(-f compose.https.yaml)
 
-log "Building images (frontend + backend; may take several minutes)..."
+log "Building Docker image (SKIP_FRONTEND_BUILD=true, WEBUI_BUILD_HASH=$WEBUI_BUILD_HASH)..."
 docker compose "${compose_args[@]}" build --pull
 
 log "Restarting stack..."

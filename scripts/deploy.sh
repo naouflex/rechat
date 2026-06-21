@@ -191,7 +191,6 @@ ensure_prod_env() {
 
 UPLOAD_EXCLUDES=(
   --exclude=./node_modules
-  --exclude=./build
   --exclude=./.git
   --exclude=./.venv
   --exclude=./venv
@@ -205,6 +204,35 @@ UPLOAD_EXCLUDES=(
   --exclude=__pycache__
   --exclude='*.pyc'
 )
+
+ensure_local_frontend_build() {
+  if [[ -f "$PROJECT_ROOT/build/index.html" && "${FORCE_FRONTEND_BUILD:-}" != "1" ]]; then
+    ok "Frontend build/ present ($(wc -c < "$PROJECT_ROOT/build/index.html") bytes index.html)."
+    return 0
+  fi
+  log "Building frontend locally before upload (VM skips npm build to avoid OOM)..."
+  chmod +x "$SCRIPT_DIR/build-frontend.sh"
+  "$SCRIPT_DIR/build-frontend.sh"
+}
+
+ensure_vm_swap() {
+  log "Ensuring 4G swap on $INSTANCE (helps Docker builds if needed)..."
+  ssh_vm '
+    set -e
+    if swapon --show 2>/dev/null | grep -q .; then
+      echo "swap already active: $(swapon --show)"
+      exit 0
+    fi
+    if [[ ! -f /swapfile ]]; then
+      sudo fallocate -l 4G /swapfile 2>/dev/null || sudo dd if=/dev/zero of=/swapfile bs=1M count=4096 status=progress
+      sudo chmod 600 /swapfile
+      sudo mkswap /swapfile
+    fi
+    sudo swapon /swapfile
+    grep -q "^/swapfile" /etc/fstab 2>/dev/null || echo "/swapfile none swap sw 0 0" | sudo tee -a /etc/fstab >/dev/null
+    echo "swap enabled: $(swapon --show)"
+  '
+}
 
 cmd_provision() {
   require_cmd gcloud
@@ -253,6 +281,7 @@ cmd_install() {
   require_cmd gcloud
   instance_exists || die "VM $INSTANCE not found; run 'provision' first."
   wait_for_ssh
+  ensure_vm_swap
   log "Installing Docker on $INSTANCE..."
   ssh_vm '
     set -e
@@ -274,8 +303,10 @@ cmd_upload() {
   require_cmd tar
   instance_exists || die "VM $INSTANCE not found; run 'provision' first."
   ensure_prod_env
+  ensure_local_frontend_build
 
-  log "Streaming project to $INSTANCE:~/$REMOTE_DIR (excludes node_modules/build/.git)..."
+  export WEBUI_BUILD_HASH="${WEBUI_BUILD_HASH:-$(git -C "$PROJECT_ROOT" rev-parse --short HEAD 2>/dev/null || echo prod)}"
+  log "Streaming project to $INSTANCE:~/$REMOTE_DIR (includes build/, excludes node_modules/.git)..."
   ssh_vm "mkdir -p ~/$REMOTE_DIR"
   tar -C "$PROJECT_ROOT" "${UPLOAD_EXCLUDES[@]}" -czf - . \
     | gcloud compute ssh "$INSTANCE" --zone="$ZONE" --quiet \
@@ -320,7 +351,9 @@ cmd_build() {
 
 cmd_init() {
   ensure_prod_env
-  log "Building production images on $INSTANCE (frontend + backend; may take 10–20 min)..."
+  ensure_local_frontend_build
+  export WEBUI_BUILD_HASH="${WEBUI_BUILD_HASH:-$(git -C "$PROJECT_ROOT" rev-parse --short HEAD 2>/dev/null || echo prod)}"
+  log "Building production Docker image on $INSTANCE (frontend pre-built, backend only)..."
   vm_compose 'build --pull'
   log "Starting stack (ollama + rechat)..."
   vm_compose 'up -d'
@@ -342,6 +375,8 @@ cmd_push() {
 }
 
 cmd_update() {
+  ensure_local_frontend_build
+  export WEBUI_BUILD_HASH="${WEBUI_BUILD_HASH:-$(git -C "$PROJECT_ROOT" rev-parse --short HEAD 2>/dev/null || echo prod)}"
   cmd_upload
   log "Rebuilding and restarting..."
   vm_compose 'build --pull'
@@ -611,7 +646,26 @@ cmd_https_logs() {
 cmd_verify() {
   require_cmd curl
   local base="https://$APP_DOMAIN"
-  log "Checking $base ..."
+  local max_attempts="${VERIFY_ATTEMPTS:-36}"
+  local interval="${VERIFY_INTERVAL:-10}"
+  local attempt=1 code=""
+
+  log "Checking $base (rechat may need ~1–3 min after restart for DB migrations)..."
+  while (( attempt <= max_attempts )); do
+    code="$(curl -fsS -o /dev/null -w '%{http_code}' "$base/health" 2>/dev/null || echo 000)"
+    if [[ "$code" == "200" ]]; then
+      break
+    fi
+    if (( attempt == 1 )); then
+      warn "Backend not ready yet (HTTP ${code}) — waiting up to $((max_attempts * interval))s..."
+    fi
+    log "  attempt $attempt/$max_attempts: /health → HTTP ${code}"
+    sleep "$interval"
+    attempt=$((attempt + 1))
+  done
+
+  [[ "$code" == "200" ]] || die "Backend still not healthy after $((max_attempts * interval))s. Run: $0 logs rechat"
+
   curl -fsS -o /dev/null -w "  GET / → HTTP %{http_code}\n" "$base/"
   curl -fsS -o /dev/null -w "  GET /health → HTTP %{http_code}\n" "$base/health"
   ok "HTTPS checks passed. Open:"
